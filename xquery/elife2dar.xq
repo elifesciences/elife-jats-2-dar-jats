@@ -9,7 +9,7 @@ This currently runs on one file (currently 42955 with a <body>), bt could be adj
 
 declare variable $outputDir := '/Users/fredatherden/Documents/GitHub/texture/data/kitchen-sink/manuscript.xml';
 
-for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '42955') and descendant::*:body]
+for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '22520') and descendant::*:body]
 let $y := 
 copy $copy := $x
 modify(
@@ -63,7 +63,7 @@ return (insert node attribute mime-subtype {$ms} into $x,
   return delete node $f,
   
   for $x in  $copy//*:p//*:disp-formula
-  return (insert node $x after $x/ancestor::*:p,
+  return (insert node $x after $x/ancestor::*:p[1],
           delete node $x),
   
   for $o in $copy//*:abstract[@abstract-type="executive-summary"]
