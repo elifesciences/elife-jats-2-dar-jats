@@ -9,7 +9,7 @@ This currently runs on one file (currently 42955 with a <body>), bt could be adj
 
 declare variable $outputDir := '/Users/fredatherden/Documents/GitHub/texture/data/kitchen-sink/manuscript.xml';
 
-for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '22520') and descendant::*:body]
+for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '42955') and descendant::*:body]
 let $y := 
 copy $copy := $x
 modify(
@@ -41,14 +41,13 @@ modify(
   for $f in $copy//*:collab[not(descendant::*)]
   return delete node $f,
   
-  for $x in $copy//*:contrib-group[@content-type="section"]//*:aff
-let $id := if ($x/ancestor::contrib[@contrib-type="editor"]) then 'aff100'
-           else 'aff200'
-return (replace node $x with <xref ref-type="aff" rid="{$id}"/>, insert node <aff id="{$id}">{$x/*}</aff> after $x/ancestor::*:contrib-group),
-
-for $x in $copy//*:contrib-group/*:aff
-return (insert node $x after $x/parent::*:contrib-group, delete node $x),
-
+   for $x in  $copy//*:article-meta
+  let $count := count($x/contrib-group[@content-type="section"])
+  return if ($count > 1) then 
+    (insert node <contrib-group content-type="section">{for $c in $x/*:contrib-group[@content-type="section"] return $c/*}</contrib-group> after $x/*:contrib-group[not(@*)],
+     for $c in $x/*:contrib-group[@content-type="section"] return delete node $c)
+  else (),
+  
 for $x in $copy//*:supplementary-material
 let $m := $x/*:media
 let $ms := $m/@mime-subtype
@@ -133,13 +132,17 @@ for $x in $copy2//*:back/*:sec
   return 
   if (count($x/parent::*:p/child::*) = 1) then replace node $x/parent::*:p with  <preformat>{$c}</preformat>
   else  replace node $x with <monospace>{$c}</monospace>
-)
+  )
 return 
 copy $copy3 := $copy2
 modify(
 
-for $v in $copy3//*:contrib-group[@content-type="section"]
-  return (delete node $v,insert node $v after $v/preceding-sibling::*:contrib-group),
+  for $x in $copy3//*:contrib-group[@content-type="section"]//*:aff
+  let $id := replace(generate-id($x),'id','aff')
+  return (replace node $x with <xref ref-type="aff" rid="{$id}"/>, insert node <aff id="{$id}">{$x/*}</aff> after $x/ancestor::*:contrib-group),
+
+  for $x in $copy3//*:contrib-group/*:aff
+  return (insert node $x after $x/parent::*:contrib-group, delete node $x),
   
   for $x in $copy3//*:self-uri
   return delete node $x,
@@ -170,6 +173,12 @@ for $v in $copy3//*:contrib-group[@content-type="section"]
 return 
 copy $copy4 := $copy3
 modify(
+  
+  for $x in  $copy4//*:article-meta/*:contrib-group[@content-type="section"]
+  return
+    (delete node $x,
+     insert node $x after $x/parent::*:article-meta/*:contrib-group[not(@*)]),
+  
   for $x in  $copy4//*:p/*:fig
   return (delete node $x, insert node $x after $x/parent::*:p),
   
