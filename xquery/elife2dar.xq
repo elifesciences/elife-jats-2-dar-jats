@@ -9,7 +9,7 @@ This currently runs on one file (currently 42955 with a <body>), bt could be adj
 
 declare variable $outputDir := '/Users/fredatherden/Documents/GitHub/texture/data/kitchen-sink/manuscript.xml';
 
-for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '42955') and descendant::*:body]
+for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '42974') and descendant::*:body]
 let $y := 
 copy $copy := $x
 modify(
@@ -205,7 +205,10 @@ modify(
   return replace node $x with $x/*,
   
   for $x in  $copy4//*:element-citation[@publication-type="web"]
-  return replace value of node $x/@publication-type with 'webpage'
+  return replace value of node $x/@publication-type with 'webpage',
+  
+  for $x in  $copy4//*:element-citation[@publication-type="preprint"]
+  return replace value of node $x/@publication-type with 'journal'
 )
 return $copy4
 return file:write($outputDir,$y)
