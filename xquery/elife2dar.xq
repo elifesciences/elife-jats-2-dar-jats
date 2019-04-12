@@ -76,6 +76,13 @@ return (insert node attribute mime-subtype {$ms} into $x,
   if ($x/following-sibling::*:back) then ()
   else insert node <back/> after $x,
   
+  for $x in  $copy//*:ext-link
+  return 
+  if ($x/@ext-link-type) then
+    if ($x/@ext-link-type='uri') then ()
+    else replace value of node $x/@ext-link-type with 'uri'
+  else insert node attribute ext-link {'uri'} into $x,
+
   for $i in  $copy//*:table-wrap[count(descendant::*:table)>1]
   return (delete node $i,
   for $t in $i//*:table
