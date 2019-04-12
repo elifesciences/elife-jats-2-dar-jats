@@ -9,7 +9,7 @@ This currently runs on one file (currently 42955 with a <body>), bt could be adj
 
 declare variable $outputDir := '/Users/fredatherden/Documents/GitHub/texture/data/kitchen-sink/manuscript.xml';
 
-for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '42974') and descendant::*:body]
+for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '42955') and descendant::*:body]
 let $y := 
 copy $copy := $x
 modify(
@@ -131,7 +131,14 @@ for $x in $copy2//*:back/*:sec
   let $c := $x/data()
   return 
   if (count($x/parent::*:p/child::*) = 1) then replace node $x/parent::*:p with  <preformat>{$c}</preformat>
-  else  replace node $x with <monospace>{$c}</monospace>
+  else  replace node $x with <monospace>{$c}</monospace>,
+  
+  for $x in  $copy2//*:ext-link
+  return 
+  if ($x/@ext-link-type) then
+    if ($x/@ext-link-type='uri') then ()
+    else replace value of node $x/@ext-link-type with 'uri'
+  else insert node attribute ext-link {'uri'} into $x
   )
 return 
 copy $copy3 := $copy2
@@ -177,7 +184,7 @@ modify(
   for $x in  $copy4//*:article-meta/*:contrib-group[@content-type="section"]
   return
     (delete node $x,
-     insert node $x after $x/parent::*:article-meta/*:contrib-group[not(@*)]),
+     insert node $x after $x/parent::*:article-meta/*:contrib-group[not(@*)][1]),
   
   for $x in  $copy4//*:p/*:fig
   return (delete node $x, insert node $x after $x/parent::*:p),
@@ -203,7 +210,7 @@ modify(
       
   for $x in  $copy4//*:boxed-text
   return replace node $x with $x/*,
-  
+   
   for $x in  $copy4//*:element-citation[@publication-type="web"]
   return replace value of node $x/@publication-type with 'webpage',
   
