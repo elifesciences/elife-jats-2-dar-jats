@@ -85,6 +85,9 @@ return (insert node attribute mime-subtype {$ms} into $x,
           if ($pos = 1) then insert node <table-wrap id="{$i/@id}">{$i/*:label}{$t}</table-wrap> after $i
           else insert node <table-wrap id="{($i/@id || '.'|| $pos)}">{$t}</table-wrap>  after $i),
           
+  for $x in $copy//*:table-wrap-foot
+  return delete node $x,
+
   for $x in $copy//*:fig/*:graphic
   let $count := count($x/ancestor::*:article//*:fig)
   let $pos := $count - count($x/following::*:fig)
