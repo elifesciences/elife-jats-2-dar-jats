@@ -121,8 +121,8 @@ for $x in $copy2//*:back/*:sec
   for $x in  $copy2//*:fn-group[@content-type="author-contribution"]
   return delete node $x,
   
-  for $x in $copy2//*:table-wrap-foot/*:fn
-  return replace node $x with <fn-group>{$x}</fn-group>,
+  for $x in $copy2//*:table-wrap-foot
+  return delete node $x,
   
   for $x in $copy2//*:break
   return delete node $x,
