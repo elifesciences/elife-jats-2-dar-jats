@@ -131,14 +131,7 @@ for $x in $copy2//*:back/*:sec
   let $c := $x/data()
   return 
   if (count($x/parent::*:p/child::*) = 1) then replace node $x/parent::*:p with  <preformat>{$c}</preformat>
-  else  replace node $x with <monospace>{$c}</monospace>,
-  
-  for $x in  $copy2//*:ext-link
-  return 
-  if ($x/@ext-link-type) then
-    if ($x/@ext-link-type='uri') then ()
-    else replace value of node $x/@ext-link-type with 'uri'
-  else insert node attribute ext-link {'uri'} into $x
+  else  replace node $x with <monospace>{$c}</monospace>
   )
 return 
 copy $copy3 := $copy2
@@ -217,5 +210,17 @@ modify(
   for $x in  $copy4//*:element-citation[@publication-type="preprint"]
   return replace value of node $x/@publication-type with 'journal'
 )
-return $copy4
+return 
+copy $copy5 := $copy4
+modify(
+  
+  for $x in  $copy5//*:ext-link
+  return 
+  if ($x/@ext-link-type) then
+    if ($x/@ext-link-type='uri') then ()
+    else replace value of node $x/@ext-link-type with 'uri'
+  else insert node attribute ext-link {'uri'} into $x
+  
+)
+return $copy5
 return file:write($outputDir,$y)
