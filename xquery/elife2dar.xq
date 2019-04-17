@@ -221,9 +221,14 @@ return
 copy $copy5 := $copy4
 modify(
   
-  for $x in  $copy5//*:ext-link
+  for $x in $copy5//*:ext-link
+  let $p := $x/parent::*
+  let $p-name := $p/local-name()
+  let $form := ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')
+  let $new-x := <ext-link ext-link-type="uri" xlink:href="{$x/@xlink:href}">{$x/(*|text())}</ext-link>
   return 
-  if ($x/@ext-link-type) then
+  if ($p-name = $form) then (delete node $p, insert node $new-x after $p)
+  else if ($x/@ext-link-type) then
     if ($x/@ext-link-type='uri') then ()
     else replace value of node $x/@ext-link-type with 'uri'
   else insert node attribute ext-link {'uri'} into $x
