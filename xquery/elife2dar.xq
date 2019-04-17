@@ -144,12 +144,20 @@ return
 copy $copy3 := $copy2
 modify(
 
-  for $x in $copy3//*:contrib-group[@content-type="section"]//*:aff
+  for $x in $copy3//*:contrib-group[@content-type="section"]/*//*:aff
   let $id := replace(generate-id($x),'id','aff')
   return (replace node $x with <xref ref-type="aff" rid="{$id}"/>, insert node <aff id="{$id}">{$x/*}</aff> after $x/ancestor::*:contrib-group),
 
-  for $x in $copy3//*:contrib-group/*:aff
+  for $x in $copy3//*:contrib-group[not(@content-type="section")]/*:aff
   return (insert node $x after $x/parent::*:contrib-group, delete node $x),
+  
+  for $x in $copy3//*:contrib-group[@content-type="section"]/*:aff
+  let $id := replace(generate-id($x),'id','aff')
+  return (
+    delete node $x,
+    for $y in $x/preceding-sibling::*:contrib return insert node <xref ref-type="aff" rid="{$id}"/> as last into $y,
+    insert node <aff id="{$id}">{$x/*}</aff> after $x/ancestor::*:contrib-group
+          ),
   
   for $x in $copy3//*:self-uri
   return delete node $x,
