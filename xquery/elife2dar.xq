@@ -239,8 +239,12 @@ modify(
   else if ($x/@ext-link-type) then
     if ($x/@ext-link-type='uri') then ()
     else replace value of node $x/@ext-link-type with 'uri'
-  else insert node attribute ext-link {'uri'} into $x
-  
+  else insert node attribute ext-link {'uri'} into $x,
+
+  for $x at $position in $copy5//td[not(@id)]
+    let $td_id := concat('t_', $position)
+    return insert node attribute id {$td_id} into $x
+
 )
 return $copy5
 return file:write($outputDir,$y)
