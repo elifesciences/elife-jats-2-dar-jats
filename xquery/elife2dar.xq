@@ -110,8 +110,8 @@ for $x in $copy2//*:addr-line[*:named-content]
 return replace node $x with <city>{$x/(*:named-content/*|*:named-content/text())}</city>,
 
 for $x in $copy2//*:back/*:sec
-  return if ($x/@sec-type="additional-information") then (insert node $x as last into $x/preceding::*:body, delete node $x)
-  else if ($x/@sec-type="supplementary-material") then (insert node $x as last into $x/preceding::*:body, delete node $x)
+  return if ($x/@sec-type="additional-information" and $x/preceding::*:body) then (insert node $x as last into $x/preceding::*:body, delete node $x)
+  else if ($x/@sec-type="supplementary-material" and $x/preceding::*:body) then (insert node $x as last into $x/preceding::*:body, delete node $x)
   else delete node $x,
    
   for $x in  $copy2//*:underline/*:named-content[@content-type="sequence"]
