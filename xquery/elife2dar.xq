@@ -64,7 +64,11 @@ return (insert node attribute mime-subtype {$ms} into $x,
   for $x in  $copy//*:p//*:disp-formula
   return 
   if ($x/ancestor::caption) then delete node $x
-  else if ($x/ancestor::list) then (insert node $x after $x/ancestor::*:list[1],
+  else if ($x/ancestor::list/ancestor::*:p) then 
+          (insert node $x after $x/ancestor::*:list/ancestor::*:p,
+          delete node $x)
+  else if ($x/ancestor::list) then 
+          (insert node $x after $x/ancestor::*:list[1],
           delete node $x)
   else (insert node $x after $x/ancestor::*:p[1],
           delete node $x),
