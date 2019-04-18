@@ -113,16 +113,7 @@ for $x in $copy2//*:back/*:sec
   return if ($x/@sec-type="additional-information") then (insert node $x as last into $x/preceding::*:body, delete node $x)
   else if ($x/@sec-type="supplementary-material") then (insert node $x as last into $x/preceding::*:body, delete node $x)
   else delete node $x,
-  
-  for $m in $copy2//mml:math
-  return delete node $m,
-  
-   for $x in  $copy2//*:inline-formula
-  return insert node <tex-math>e=mc^2</tex-math> as last into $x,
-  
-  for $x in  $copy2//*:disp-formula
-  return insert node <tex-math>e=mc^2</tex-math> as last into $x,
-  
+   
   for $x in  $copy2//*:underline/*:named-content[@content-type="sequence"]
   return replace node $x with $x/(text()|*),
   
@@ -142,7 +133,13 @@ for $x in $copy2//*:back/*:sec
   let $c := $x/data()
   return 
   if (count($x/parent::*:p/child::*) = 1) then replace node $x/parent::*:p with  <preformat>{$c}</preformat>
-  else  replace node $x with <monospace>{$c}</monospace>
+  else  replace node $x with <monospace>{$c}</monospace>,
+  
+  for $x in $copy2//*:article-meta/*:contrib-group[@content-type="section"]/following-sibling::*:contrib-group
+  return delete node $x,
+  
+  for $x in $copy2//*:article-meta/*:contrib-group/*:contrib[not(child::*:name)]
+  return insert node <name><surname>Placeholder</surname></name> as first into $x
   )
 return 
 copy $copy3 := $copy2
@@ -247,7 +244,10 @@ modify(
   
   for $x in $copy5//(*:table[not(@id)]|*:td[not(@id)]|*:tr[not(@id)]|*:th[not(@id)])
   let $id := generate-id($x)
-  return insert node attribute id {$id} into $x
+  return insert node attribute id {$id} into $x,
+  
+  for $m in $copy5//mml:math
+  return replace node $m with <tex-math>e=mc^2</tex-math>
   
 )
 return $copy5
