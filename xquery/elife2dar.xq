@@ -29,7 +29,7 @@ modify(
   for $x in $copy//*:front//*:xref[@ref-type="fn"]
   return delete node $x,
     
-  for $e in $copy//*:object-id[ancestor::*:abstract or ancestor::*:supplementary-material]
+  for $e in $copy//*:object-id
   return delete node $e,
   
   for $d in $copy//*:funding-group/*:funding-statement
@@ -106,8 +106,8 @@ return (insert node attribute mime-subtype {$ms} into $x,
 return
 copy $copy2 := $copy
 modify(
-for $x in $copy2//*:addr-line/*:named-content
-return replace node $x with $x/(*|text()),
+for $x in $copy2//*:addr-line[*:named-content]
+return replace node $x with <city>{$x/(*:named-content/*|*:named-content/text())}</city>,
 
 for $x in $copy2//*:back/*:sec
   return if ($x/@sec-type="additional-information") then (insert node $x as last into $x/preceding::*:body, delete node $x)
@@ -120,8 +120,8 @@ for $x in $copy2//*:back/*:sec
   for $x in  $copy2//*:fn-group[@content-type="author-contribution"]
   return delete node $x,
   
-  for $x in $copy2//*:table-wrap-foot
-  return delete node $x,
+  for $x in $copy2//*:table-wrap-foot/*:fn
+  return replace node $x with <fn-group>{$x}</fn-group>,
   
   for $x in $copy2//*:break
   return delete node $x,
@@ -137,6 +137,9 @@ for $x in $copy2//*:back/*:sec
   
   for $x in $copy2//*:article-meta/*:contrib-group[@content-type="section"]/following-sibling::*:contrib-group
   return delete node $x,
+  
+  for $x in $copy2//*:app//*:sec[@sec-type="appendix"]
+  return delete node $x/@sec-type,
   
   for $x in $copy2//*:article-meta/*:contrib-group/*:contrib[not(child::*:name)]
   return insert node <name><surname>Placeholder</surname></name> as first into $x
@@ -165,10 +168,6 @@ modify(
   
   for $x in $copy3//*:custom-meta-group
   return delete node $x,
-  
-  for $x in $copy3//*:aff/*:institution
-  return if ($x/@content-type) then replace value of node $x/@content-type with 'orgdiv1'
-         else insert node attribute content-type {'orgname'} into $x,
          
   for $x in $copy3//*:ref//*:ext-link
   return replace node $x with <uri>{$x/text()}</uri>,
@@ -183,7 +182,7 @@ modify(
   return delete node $x,
   
   for $x in $copy3//*:app
-  return (delete node $x, insert node <sec>{$x/*[not(local-name() = 'object-id')]}</sec> as last into $x/preceding::*:body)
+  return (delete node $x, insert node <sec sec-type="appendix">{$x/*[not(local-name() = 'object-id')]}</sec> as last into $x/preceding::*:body)
 
 )
 return 
@@ -246,9 +245,24 @@ modify(
   let $id := generate-id($x)
   return insert node attribute id {$id} into $x,
   
-  for $m in $copy5//mml:math
+  for $x in $copy5//*[*:inline-formula]
+  let $n := $x/local-name()
+  return 
+  if ($n = ('sup','sub','italic','bold','underline')) then replace node $x with $x/(*|text())
+  else (),
+  
+  for $x in $copy5//*:aff/*:institution
+  return if ($x/@content-type) then replace value of node $x/@content-type with 'orgdiv1'
+         else insert node attribute content-type {'orgname'} into $x
+  
+)
+return 
+copy $copy6 := $copy5
+modify(
+  
+  for $m in $copy6//mml:math
   return replace node $m with <tex-math>e=mc^2</tex-math>
   
 )
-return $copy5
+return $copy6
 return file:write($outputDir,$y)
