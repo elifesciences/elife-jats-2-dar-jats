@@ -243,7 +243,11 @@ modify(
   else if ($x/@ext-link-type) then
     if ($x/@ext-link-type='uri') then ()
     else replace value of node $x/@ext-link-type with 'uri'
-  else insert node attribute ext-link {'uri'} into $x
+  else insert node attribute ext-link {'uri'} into $x,
+  
+  for $x in $copy5//(*:table[not(@id)]|*:td[not(@id)]|*:tr[not(@id)]|*:th[not(@id)])
+  let $id := generate-id($x)
+  return insert node attribute id {$id} into $x
   
 )
 return $copy5
