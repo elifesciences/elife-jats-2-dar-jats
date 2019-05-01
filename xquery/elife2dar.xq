@@ -261,7 +261,14 @@ copy $copy6 := $copy5
 modify(
   
   for $m in $copy6//mml:math
-  return replace node $m with <tex-math>e=mc^2</tex-math>
+  return replace node $m with <tex-math>e=mc^2</tex-math>,
+  
+  for $x in $copy6//*:xref
+  let $bad-ancestors := ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')
+  return if ($x/ancestor::*[local-name() = $bad-ancestors]) then
+              (insert node $x after $x/ancestor::*[local-name() = $bad-ancestors],
+                delete node $x)
+         else ()
   
 )
 return $copy6
