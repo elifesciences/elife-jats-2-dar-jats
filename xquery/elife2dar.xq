@@ -142,7 +142,10 @@ for $x in $copy2//*:back/*:sec
   return delete node $x/@sec-type,
   
   for $x in $copy2//*:article-meta/*:contrib-group/*:contrib[not(child::*:name)]
-  return insert node <name><surname>Placeholder</surname></name> as first into $x
+  return insert node <name><surname>Placeholder</surname></name> as first into $x,
+  
+   for $x in $copy2//(*:td|*:th)/*:p
+  return replace node $x with $x/(*|text())
   )
 return 
 copy $copy3 := $copy2
@@ -223,7 +226,15 @@ modify(
   return replace value of node $x/@publication-type with 'webpage',
   
   for $x in  $copy4//*:element-citation[@publication-type="preprint"]
-  return replace value of node $x/@publication-type with 'journal'
+  return replace value of node $x/@publication-type with 'journal',
+  
+  for $x in  $copy4//*:element-citation[@publication-type="other"]
+  return replace value of node $x/@publication-type with 'software',
+  
+  for $x in  $copy4//*:element-citation[@publication-type="journal" or @publication-type="book"]
+  return if (count($x/*:volume) > 1) then (for $y in $x/*:volume return delete node $y,
+                                             insert node $x/*:volume[1] after $x/*:source)
+         else ()
 )
 return 
 copy $copy5 := $copy4
