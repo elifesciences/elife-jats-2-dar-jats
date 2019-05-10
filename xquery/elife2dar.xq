@@ -26,6 +26,9 @@ modify(
   for $s in $copy//*:sec[@sec-type="additional-information"]/*:fn-group
   return delete node $s,
   
+  for $s in $copy//*:back/*:fn-group
+  return delete node $s,
+  
   for $x in $copy//*:front//*:xref[@ref-type="fn"]
   return delete node $x,
     
@@ -126,6 +129,14 @@ for $x in $copy2//*:back/*:sec
   for $x in $copy2//*:break
   return delete node $x,
   
+  for $x in $copy2//*:named-content
+  return 
+  if (starts-with($x/@content-type,'author-callout-style')) then delete node $x
+  else (),
+  
+  for $x in $copy2//*:styled-content
+  return delete node $x,
+  
   for $x in $copy2//*:p//*:list
   return (delete node $x, insert node $x after $x/ancestor::*:p[1]),
   
@@ -220,7 +231,7 @@ modify(
       else ()),
       
   for $x in  $copy4//*:boxed-text
-  return replace node $x with $x/*,
+  return replace node $x with $x/*[local-name() = ('sec','p')],
    
   for $x in  $copy4//*:element-citation[@publication-type="web"]
   return replace value of node $x/@publication-type with 'webpage',
@@ -282,5 +293,14 @@ modify(
          else ()
   
 )
-return $copy6
+return 
+copy $copy7 := $copy6
+modify(
+  
+  for $x in $copy7//*:p//*:table-wrap
+  return (insert node $x after $x/ancestor::*:p,
+          delete node $x/ancestor::*:p)
+  
+)
+return $copy7
 return file:write($outputDir,$y)
