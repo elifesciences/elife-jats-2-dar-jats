@@ -1,15 +1,15 @@
 declare namespace xlink="http://www.w3.org/1999/xlink";
 declare namespace mml="http://www.w3.org/1998/Math/MathML";
 
+declare variable $inputfile as xs:string+ external;
+(: declare variable $outputfile as xs:string+ external; :)
 (:
 Assumes that the local instance of Texture is running from files in the following directory '/Users/fredatherden/Documents/GitHub/texture/data/kitchen-sink'.
 
 This currently runs on one file (currently 42955 with a <body>), bt could be adjusted to run/output numerous files with ease/processing power.
  :)
 
-declare variable $outputDir := '/Users/fredatherden/Documents/GitHub/texture/data/kitchen-sink/manuscript.xml';
-
-for $x in collection('articles')//*:article[(descendant::*:article-id[@pub-id-type="publisher-id"]= '42955') and descendant::*:body]
+for $x in doc(concat('../', $inputfile))
 let $y := 
 copy $copy := $x
 modify(
@@ -303,4 +303,4 @@ modify(
   
 )
 return $copy7
-return file:write($outputDir,$y)
+return $y
