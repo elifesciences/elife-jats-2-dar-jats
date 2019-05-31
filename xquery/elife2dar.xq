@@ -195,6 +195,9 @@ modify(
   for $x in  $copy3//*:sec[@sec-type="data-availability"]
   return delete node $x,
   
+  for $x in  $copy3//*:sec[@sec-type="datasets"]
+  return delete node $x,
+  
   for $x in $copy3//*:app
   return (delete node $x, insert node <sec sec-type="appendix">{$x/*[not(local-name() = 'object-id')]}</sec> as last into $x/preceding::*:body)
 
@@ -299,7 +302,10 @@ modify(
   
   for $x in $copy7//*:p//*:table-wrap
   return (insert node $x after $x/ancestor::*:p,
-          delete node $x/ancestor::*:p)
+          delete node $x/ancestor::*:p),
+          
+  for $x in $copy7//*:fig/*:graphic[preceding-sibling::*:graphic]
+  return delete node $x
   
 )
 return $copy7
