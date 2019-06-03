@@ -40,6 +40,9 @@ modify(
   
   for $t in $copy//*:kwd-group/*:title
   return delete node $t,
+  
+  for $r in $copy//*:ref-list[*:title = 'Acknowledgements']
+  return delete node $r,
     
   for $f in $copy//*:collab[not(descendant::*)]
   return delete node $f,
@@ -64,6 +67,9 @@ return (insert node attribute mime-subtype {$ms} into $x,
   for $f in $copy//*:related-article
   return delete node $f,
   
+  for $f in $copy//*:related-object
+  return delete node $f,
+  
   for $x in  $copy//*:p//*:disp-formula
   return 
   if ($x/ancestor::caption) then delete node $x
@@ -78,6 +84,9 @@ return (insert node attribute mime-subtype {$ms} into $x,
   
   for $o in $copy//*:abstract[@abstract-type="executive-summary"]
   return delete node $o,
+  
+  for $x in $copy//*:element-citation//*:xref
+  return delete node $x,
   
   for $x in $copy//*:fig/*:attrib
   return delete node $x,
@@ -153,7 +162,8 @@ for $x in $copy2//*:back/*:sec
   return delete node $x/@sec-type,
   
   for $x in $copy2//*:article-meta/*:contrib-group/*:contrib[not(child::*:name)]
-  return insert node <name><surname>Placeholder</surname></name> as first into $x,
+  return if ($x/*:contrib-group) then delete node $x
+  else insert node <name><surname>Placeholder</surname></name> as first into $x,
   
    for $x in $copy2//(*:td|*:th)/*:p
   return replace node $x with $x/(*|text())
@@ -186,9 +196,6 @@ modify(
   for $x in $copy3//*:ref//*:ext-link
   return replace node $x with <uri>{$x/text()}</uri>,
   
-  for $x in  $copy3//*:media[@mimetype="video"]
-  return delete node $x,
-  
   for $x in  $copy3//*:xref[@ref-type="video"]
   return delete node $x,
   
@@ -211,30 +218,20 @@ modify(
     (delete node $x,
      insert node $x after $x/parent::*:article-meta/*:contrib-group[not(@*)][1]),
   
-  for $x in  $copy4//*:p/*:fig
-  return (delete node $x, insert node $x after $x/parent::*:p),
+  for $x in  $copy4//*:p//*:fig
+  return (delete node $x, insert node $x after $x/ancestor::*:p[position() = last()]),
   
-  for $x in  $copy4//*:p/*:fig-group
-  return (delete node $x, insert node $x after $x/parent::*:p),
+  for $x in  $copy4//*:p//*:fig-group
+  return (delete node $x, insert node $x after $x/ancestor::*:p[position() = last()]),
   
-  for $x in  $copy4//*:p/*:table-wrap
-  return (delete node $x, insert node $x after $x/parent::*:p),
+  for $x in  $copy4//*:p//*:table-wrap
+  return (delete node $x, insert node $x after $x/ancestor::*:p[position() = last()]),
   
   for $x in  $copy4//*:p/*:related-object
   return delete node $x,
   
   for $x in  $copy4//*:app-group
   return delete node $x,
-  
-  for $x in  $copy4//*:table-wrap-foot[count(fn-group)>1]
-  return (for $c in $x/descendant::*:fn-group
-           let $count :=  count($c/ancestor::*:table-wrap-foot//*:fn-group)
-          let $pos := $count - count($c/following-sibling::*:fn-group)
-        return if ($pos > 1) then (for $y in $c/*:fn return insert node $y as last into $y/ancestor::table-wrap-foot/descendant::*:fn-group[1], delete node $c)
-      else ()),
-      
-  for $x in  $copy4//*:boxed-text
-  return replace node $x with $x/*[local-name() = ('sec','p')],
    
   for $x in  $copy4//*:element-citation[@publication-type="web"]
   return replace value of node $x/@publication-type with 'webpage',
@@ -296,6 +293,12 @@ modify(
   return if ($x/ancestor::*[local-name() = $bad-ancestors]) then
               (insert node $x after $x/ancestor::*[local-name() = $bad-ancestors],
                 delete node $x)
+         else (),
+         
+  for $x in $copy6//*:collab/*
+  let $bad-children := ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')
+  return if ($x/local-name() = $bad-children) then
+              replace node $x with $x/(*|text())
          else ()
   
 )
@@ -311,5 +314,66 @@ modify(
   return delete node $x
   
 )
-return $copy7
+return 
+copy $copy8 := $copy7
+modify(
+  
+  for $x in  $copy8//*:table-wrap-foot[count(fn-group)>1]
+  return (for $c in $x/descendant::*:fn-group
+           let $count :=  count($c/ancestor::*:table-wrap-foot//*:fn-group)
+          let $pos := $count - count($c/following-sibling::*:fn-group)
+        return if ($pos > 1) then (for $y in $c/*:fn return insert node $y as last into $y/ancestor::table-wrap-foot/descendant::*:fn-group[1], delete node $c)
+      else ()),
+      
+  for $x in $copy8//*:inline-formula
+  let $form := ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')
+  return 
+    if ($x//ancestor::*[local-name() = $form]) then 
+      (insert node $x before $x//ancestor::*[local-name() = $form][position() = last()],
+      delete node $x)
+  else (),
+  
+  for $y in $copy8//*:conf-name/*:italic
+  return replace node $x with $x/(*|text()),
+  
+  for $y in $copy8//*:element-citation/*:year[preceding-sibling::*:year]
+  return delete node $y,
+  
+  for $y in $copy8//*:element-citation/*:fpage[preceding-sibling::*:fpage]
+  return delete node $y,
+  
+  for $y in $copy8//*:element-citation/*:article-title[preceding-sibling::*:article-title]
+  return delete node $y,
+  
+  for $y in $copy8//*:aff/*:label[preceding-sibling::*:label]
+  return delete node $y,
+  
+  for $x in $copy8//*:contrib/*:email[preceding-sibling::*:email]
+  return delete node $x,
+  
+  for $x in $copy8//*:fig/*:p
+  return 
+  if ($x/parent::*:fig/*:caption) then 
+          (delete node $x,
+          insert node $x as last into $x/parent::*:fig/*:caption[1])
+  else if ($x/parent::*:fig/*:label) then 
+          (delete node $x,
+          insert node <caption>{$x}</caption> after $x/parent::*:fig/*:label[1])
+  else delete node $x,
+  
+  for $x in  $copy8//*:media[@mimetype="video"]
+  return delete node $x
+  
+)
+
+return 
+copy $copy9 := $copy8
+modify(
+
+
+for $x in  $copy9//*:boxed-text
+  return replace node $x with $x/*[local-name() = ('sec','p')]
+  
+)
+return $copy9 
 return $y
