@@ -135,19 +135,11 @@ for $x in $copy2//*:back/*:sec
   for $x in $copy2//*:table-wrap-foot/*:fn
   return replace node $x with <fn-group>{$x}</fn-group>,
   
-  for $x in $copy2//*:break
-  return delete node $x,
-  
-  for $x in $copy2//*:named-content
-  return 
-  if (starts-with($x/@content-type,'author-callout-style')) then delete node $x
-  else (),
-  
   for $x in $copy2//*:styled-content
   return delete node $x,
   
   for $x in $copy2//*:p//*:list
-  return (delete node $x, insert node $x after $x/ancestor::*:p[1]),
+  return (delete node $x, insert node $x after $x/ancestor::*:p[position() = last()]),
   
   for $x in $copy2//*:code
   let $c := $x/data()
@@ -206,7 +198,10 @@ modify(
   return delete node $x,
   
   for $x in $copy3//*:app
-  return (delete node $x, insert node <sec sec-type="appendix">{$x/*[not(local-name() = 'object-id')]}</sec> as last into $x/preceding::*:body)
+  return (delete node $x, insert node <sec sec-type="appendix">{$x/*[not(local-name() = 'object-id')]}</sec> as last into $x/preceding::*:body),
+  
+  for $x in $copy3//*:p//*:list
+  return (delete node $x, insert node $x after $x/ancestor::*:p[position() = last()])
 
 )
 return 
@@ -275,7 +270,10 @@ modify(
   
   for $x in $copy5//*:aff/*:institution
   return if ($x/@content-type) then replace value of node $x/@content-type with 'orgdiv1'
-         else insert node attribute content-type {'orgname'} into $x
+         else insert node attribute content-type {'orgname'} into $x,
+         
+  for $x in $copy5//*:p//*:list
+  return (delete node $x, insert node $x after $x/ancestor::*:p[position() = last()])
   
 )
 return 
@@ -289,10 +287,12 @@ modify(
   return replace node $x with <ext-link ext-link-type='uri' xlink:href="{$x/@xlink:href}">{$x/data()}</ext-link>,
   
   for $x in $copy6//*:xref
-  let $bad-ancestors := ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')
-  return if ($x/ancestor::*[local-name() = $bad-ancestors]) then
-              (insert node $x after $x/ancestor::*[local-name() = $bad-ancestors],
+  let $form := ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')
+  return if ($x/ancestor::*[local-name() = $form]) then
+              (insert node $x after $x/ancestor::*[local-name() = $form],
                 delete node $x)
+         else if ($x/*[local-name() = $form]) then
+               replace node $x with <xref ref-type="{$x/@ref-type}" rid="{$x/@rid}">{$x/*/text()}</xref>
          else (),
          
   for $x in $copy6//*:collab/*
@@ -342,8 +342,36 @@ modify(
   for $y in $copy8//*:element-citation/*:fpage[preceding-sibling::*:fpage]
   return delete node $y,
   
+  for $y in $copy8//*:element-citation/*:lpage[preceding-sibling::*:lpage]
+  return delete node $y,
+  
+  for $y in $copy8//*:element-citation/*:elocation-id[preceding-sibling::*:elocation-id]
+  return delete node $y,
+  
   for $y in $copy8//*:element-citation/*:article-title[preceding-sibling::*:article-title]
   return delete node $y,
+  
+  for $y in $copy8//*:element-citation/*:source[preceding-sibling::*:source]
+  return delete node $y,
+  
+  for $y in $copy8//*:element-citation/*:conf-date
+  return delete node $y,
+  
+  for $y in $copy8//*:volume//(*:sup|*:bold|*:italic)
+  return replace node $y with $x/text(),
+  
+  for $x in $copy8//*:uri/*:uri
+  return 
+    if ($x/ancestor::*:ref) then
+      if ($x/parent::*:uri/@xlink:href) then replace node $x with $x/text()
+      else if ($x/@xlink:href) then replace node $x/parent::*:uri with $x
+      else delete node $x/parent::*:uri
+    else if ($x/parent::*:uri/@xlink:href) then replace node $x/parent::*:uri with <ext-link ext-link-type="uri" xlink:href="{$x/parent::*:uri/@xlink:href}">{$x/text()}</ext-link>
+    else if ($x/@xlink:href) then replace node $x/parent::*:uri with <ext-link ext-link-type="uri" xlink:href="{$x/@xlink:href}">{$x/text()}</ext-link>
+    else delete node $x/parent::*:uri,
+    
+  for $x in $copy8//*:uri[ancestor::*:body]
+  return replace node $x with <ext-link ext-link-type="uri" xlink:href="{$x/@xlink:href}">{$x/text()}</ext-link>,
   
   for $y in $copy8//*:aff/*:label[preceding-sibling::*:label]
   return delete node $y,
@@ -361,8 +389,16 @@ modify(
           insert node <caption>{$x}</caption> after $x/parent::*:fig/*:label[1])
   else delete node $x,
   
-  for $x in  $copy8//*:media[@mimetype="video"]
-  return delete node $x
+  for $x in $copy8//*:media[@mimetype="video"]
+  return delete node $x,
+  
+  for $x in $copy8//*:break
+  return delete node $x,
+  
+   for $x in $copy2//*:named-content
+  return 
+  if (starts-with($x/@content-type,'author-callout-style')) then delete node $x
+  else ()
   
 )
 
@@ -371,8 +407,14 @@ copy $copy9 := $copy8
 modify(
 
 
-for $x in  $copy9//*:boxed-text
-  return replace node $x with $x/*[local-name() = ('sec','p')]
+  for $x in $copy9//*:boxed-text
+  return replace node $x with $x/*[local-name() = ('sec','p')],
+  
+  for $x in $copy9//*:contrib-group/*:on-behalf-of
+  return delete node $x,
+  
+  for $x in $copy9//*:history/*:fn
+  return delete node $x
   
 )
 return $copy9 
