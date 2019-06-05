@@ -154,7 +154,7 @@ for $x in $copy2//*:back/*:sec
   return delete node $x/@sec-type,
   
   for $x in $copy2//*:article-meta/*:contrib-group/*:contrib[not(child::*:name)]
-  return if ($x/*:contrib-group) then delete node $x
+  return if ($x//*:contrib-group) then delete node $x
   else insert node <name><surname>Placeholder</surname></name> as first into $x,
   
    for $x in $copy2//(*:td|*:th)/*:p
@@ -289,10 +289,10 @@ modify(
   for $x in $copy6//*:xref
   let $form := ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')
   return if ($x/ancestor::*[local-name() = $form]) then
-              (insert node $x after $x/ancestor::*[local-name() = $form],
+              (insert node $x after $x/ancestor::*[local-name() = $form][position() = last()],
                 delete node $x)
          else if ($x/*[local-name() = $form]) then
-               replace node $x with <xref ref-type="{$x/@ref-type}" rid="{$x/@rid}">{$x/*/text()}</xref>
+               replace node $x with <xref ref-type="{$x/@ref-type}" rid="{$x/@rid}">{$x/data()}</xref>
          else (),
          
   for $x in $copy6//*:collab/*
@@ -395,7 +395,7 @@ modify(
   for $x in $copy8//*:break
   return delete node $x,
   
-   for $x in $copy2//*:named-content
+  for $x in $copy8//*:named-content
   return 
   if (starts-with($x/@content-type,'author-callout-style')) then delete node $x
   else ()
