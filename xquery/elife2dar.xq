@@ -414,7 +414,12 @@ modify(
   return delete node $x,
   
   for $x in $copy9//*:history/*:fn
-  return delete node $x
+  return delete node $x,
+  
+  for $x in $copy9//*[local-name() = ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')]
+  let $t := normalize-space($x/data())
+  return if ($t = '') then delete node $x
+  else ()
   
 )
 return $copy9 
