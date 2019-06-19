@@ -74,12 +74,12 @@ return (insert node attribute mime-subtype {$ms} into $x,
   return 
   if ($x/ancestor::caption) then delete node $x
   else if ($x/ancestor::list/ancestor::*:p) then 
-          (insert node $x after $x/ancestor::*:list/ancestor::*:p,
+          (insert node $x after $x/ancestor::*:list/ancestor::*:p[position() = last()],
           delete node $x)
   else if ($x/ancestor::list) then 
-          (insert node $x after $x/ancestor::*:list[1],
+          (insert node $x after $x/ancestor::*:list[position() = last()],
           delete node $x)
-  else (insert node $x after $x/ancestor::*:p[1],
+  else (insert node $x after $x/ancestor::*:p[position() = last()],
           delete node $x),
   
   for $o in $copy//*:abstract[@abstract-type="executive-summary"]
@@ -222,6 +222,9 @@ modify(
   for $x in  $copy4//*:p//*:table-wrap
   return (delete node $x, insert node $x after $x/ancestor::*:p[position() = last()]),
   
+   for $x in  $copy4//*:list-item//*:table-wrap
+  return (delete node $x, insert node $x after $x/ancestor::*:list[position() = last()]),
+  
   for $x in  $copy4//*:p/*:related-object
   return delete node $x,
   
@@ -281,7 +284,10 @@ copy $copy6 := $copy5
 modify(
   
   for $m in $copy6//mml:math
-  return replace node $m with <tex-math>e=mc^2</tex-math>,
+  return 
+  if ($m/parent::*:inline-formula) then replace node $m with <tex-math>e=mc^2</tex-math>
+  else if ($m/parent::*:disp-formula) then replace node $m with <tex-math>e=mc^2</tex-math>
+  else delete node $m,
   
   for $x in $copy6//*:ext-link[child::*]
   return replace node $x with <ext-link ext-link-type='uri' xlink:href="{$x/@xlink:href}">{$x/data()}</ext-link>,
@@ -334,7 +340,7 @@ modify(
   else (),
   
   for $y in $copy8//*:conf-name/*:italic
-  return replace node $x with $x/(*|text()),
+  return replace node $y with $y/(*|text()),
   
   for $y in $copy8//*:element-citation/*:year[preceding-sibling::*:year]
   return delete node $y,
@@ -348,6 +354,12 @@ modify(
   for $y in $copy8//*:element-citation/*:elocation-id[preceding-sibling::*:elocation-id]
   return delete node $y,
   
+  for $y in $copy8//*:element-citation/*:conf-name[preceding-sibling::*:conf-name]
+  return delete node $y,
+  
+  for $y in $copy8//*:element-citation/*:uri[preceding-sibling::*:uri]
+  return delete node $y,
+  
   for $y in $copy8//*:element-citation/*:article-title[preceding-sibling::*:article-title]
   return delete node $y,
   
@@ -356,6 +368,15 @@ modify(
   
   for $y in $copy8//*:element-citation/*:conf-date
   return delete node $y,
+  
+  for $y in $copy8//*:element-citation/*:version
+  return 
+  if ($y/*:uri) then delete node $y
+  else if ($y/preceding-sibling::*:uri) then delete node $y
+  else (),
+    
+  for $y in $copy8//*:element-citation//*:surname/*:uri
+  return replace node $y with $y/*,
   
   for $y in $copy8//*:volume//(*:sup|*:bold|*:italic)
   return replace node $y with $x/text(),
@@ -398,7 +419,10 @@ modify(
   for $x in $copy8//*:named-content
   return 
   if (starts-with($x/@content-type,'author-callout-style')) then delete node $x
-  else ()
+  else (),
+  
+  for $x in $copy8//*:fig/*:permissions[preceding-sibling::*:permissions]
+  return delete node $x
   
 )
 
@@ -419,7 +443,11 @@ modify(
   for $x in $copy9//*[local-name() = ('bold','fixed-case','italic','monospace','overline','overline-start','overline-end','roman','sans-serif','sc','strike','underline','underline-start','underline-end','ruby','sub','sup')]
   let $t := normalize-space($x/data())
   return if ($t = '') then delete node $x
-  else ()
+  else (),
+  
+  for $x in $copy9//*:fn/*:disp-formula
+  return (delete node $x,
+          insert node <p><inline-formula>{$x/(text|*[local-name() != 'label'])}</inline-formula></p> as last into $x/parent::*:fn)
   
 )
 return $copy9 
